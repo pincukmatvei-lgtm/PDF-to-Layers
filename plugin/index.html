@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        padding: 12px;
+        color: var(--uxp-host-text-color);
+        font-size: var(--uxp-host-font-size);
+      }
+      .section {
+        margin-bottom: 14px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+      }
+      #fileName {
+        flex: 1;
+        margin-left: 8px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      sp-textfield {
+        width: 100%;
+      }
+      .error {
+        color: #ff6a6a;
+      }
+      #importBtn {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="section row">
+      <sp-button id="pickBtn" variant="secondary">Выбрать PDF…</sp-button>
+      <sp-body id="fileName" size="S">Файл не выбран</sp-body>
+    </div>
+
+    <div class="section">
+      <sp-label>Страницы</sp-label>
+      <sp-textfield id="pagesInput" placeholder="все, например 1-5, 8" disabled></sp-textfield>
+      <sp-detail id="pagesError" class="error"></sp-detail>
+    </div>
+
+    <div class="section">
+      <sp-label>Режим</sp-label>
+      <sp-radio-group id="modeGroup">
+        <sp-radio value="raster" checked>Растр</sp-radio>
+        <sp-radio value="smart">Смарт-объект</sp-radio>
+      </sp-radio-group>
+    </div>
+
+    <div class="section">
+      <sp-label>Куда</sp-label>
+      <sp-radio-group id="targetGroup">
+        <sp-radio value="new" checked>Новый документ</sp-radio>
+        <sp-radio value="current" id="targetCurrent">Текущий документ</sp-radio>
+      </sp-radio-group>
+    </div>
+
+    <div class="section">
+      <sp-button id="importBtn" variant="cta" disabled>Импортировать</sp-button>
+    </div>
+
+    <sp-body id="status" size="S"></sp-body>
+
+    <script src="main.js"></script>
+  </body>
+</html>
