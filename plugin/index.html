@@ -65,7 +65,8 @@
       <sp-button id="importBtn" variant="cta" disabled>Импортировать</sp-button>
     </div>
 
-    <sp-body id="status" size="S"></sp-body>
+    <!-- Cleared by main.js on startup; stays visible if the bundle failed to load. -->
+    <sp-body id="status" size="S" class="error">Скрипт плагина не загружен (plugin/main.js). Выполните npm run build и перезагрузите плагин.</sp-body>
 
     <script src="main.js"></script>
   </body>

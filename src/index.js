@@ -23,6 +23,13 @@ function setStatus(text, isError = false) {
   el.classList.toggle("error", isError);
 }
 
+/** UXP Spectrum widgets react to the attribute, not reliably to the property. */
+function setEnabled(id, enabled) {
+  const el = $(id);
+  if (enabled) el.removeAttribute("disabled");
+  else el.setAttribute("disabled", "");
+}
+
 function hasOpenDocument() {
   return app.documents.length > 0;
 }
@@ -43,18 +50,24 @@ function validatePages() {
 function refreshUi() {
   const pagesOk = validatePages() !== null;
   const canTargetCurrent = hasOpenDocument();
-  $("targetCurrent").disabled = !canTargetCurrent;
+  setEnabled("targetCurrent", canTargetCurrent);
   if (!canTargetCurrent && $("targetCurrent").checked) {
     $("targetCurrent").checked = false;
     $("targetGroup").querySelector('sp-radio[value="new"]').checked = true;
   }
-  $("pickBtn").disabled = state.busy;
-  $("pagesInput").disabled = state.busy || !state.info;
-  $("importBtn").disabled = state.busy || !state.info || !pagesOk;
+  setEnabled("pickBtn", !state.busy);
+  setEnabled("pagesInput", !state.busy && !!state.info);
+  setEnabled("importBtn", !state.busy && !!state.info && pagesOk);
 }
 
 async function pickFile() {
-  const file = await storage.localFileSystem.getFileForOpening({ types: ["pdf"] });
+  if (state.busy) return;
+  const picked = await storage.localFileSystem.getFileForOpening({
+    allowMultiple: false,
+    types: ["pdf"],
+  });
+  // Some UXP versions return an array even for a single file.
+  const file = Array.isArray(picked) ? picked[0] : picked;
   if (!file) return;
 
   state.file = null;
@@ -105,27 +118,64 @@ async function runImport() {
   }
 }
 
+/** Runs a UI handler and shows any failure in the panel instead of swallowing it. */
+function guarded(fn) {
+  return () => {
+    Promise.resolve()
+      .then(fn)
+      .catch((e) => {
+        console.error(e);
+        setStatus(`Ошибка: ${e && e.message ? e.message : e}`, true);
+      });
+  };
+}
+
 function init() {
-  $("pickBtn").addEventListener("click", () => pickFile().catch((e) => setStatus(e.message, true)));
-  $("importBtn").addEventListener("click", runImport);
-  $("pagesInput").addEventListener("input", refreshUi);
+  setStatus("");
+  $("pickBtn").addEventListener("click", guarded(pickFile));
+  $("importBtn").addEventListener("click", guarded(runImport));
+  $("pagesInput").addEventListener("input", guarded(refreshUi));
 
   // Keep the "current document" option in sync with open documents.
-  action
-    .addNotificationListener(["open", "close", "make", "select"], () => refreshUi())
-    .catch(() => {});
+  // Optional: the panel works without it.
+  try {
+    const result = action.addNotificationListener(["open", "close", "make", "select"], () => {
+      try {
+        refreshUi();
+      } catch (e) {
+        console.error(e);
+      }
+    });
+    if (result && typeof result.catch === "function") result.catch((e) => console.error(e));
+  } catch (e) {
+    console.error(e);
+  }
 
   refreshUi();
 }
 
-entrypoints.setup({
-  panels: {
-    pdfToLayersPanel: {
-      show() {
-        refreshUi();
+// Wire up the UI first so a failure below can never leave dead buttons.
+try {
+  init();
+} catch (e) {
+  console.error(e);
+  setStatus(`Ошибка инициализации: ${e.message}`, true);
+}
+
+try {
+  entrypoints.setup({
+    panels: {
+      pdfToLayersPanel: {
+        show() {
+          try {
+            refreshUi();
+          } catch (e) {
+            console.error(e);
+          }
+        },
       },
     },
-  },
-});
-
-init();
+  });
+} catch (e) {
+  console.error(e);
+}

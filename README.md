@@ -21,7 +21,7 @@ npm test        # unit-тесты (без Photoshop)
 ## Установка для разработки
 
 1. Установите **UXP Developer Tool** из Creative Cloud.
-2. `npm run build`.
+2. `npm run build` (необязательно: собранный `plugin/main.js` уже лежит в репозитории).
 3. В UDT: **Add Plugin** → выберите `plugin/manifest.json` → **Load**.
 4. В Photoshop: **Plugins → PDF to Layers**.
 
@@ -42,7 +42,7 @@ plugin/            # то, что загружается в Photoshop
   manifest.json
   index.html       # панель (Spectrum UXP-виджеты)
   icons/
-  main.js          # сборка (не в git)
+  main.js          # сборка (коммитится, чтобы плагин грузился без npm)
 src/
   index.js         # UI панели
   importer.js      # импорт внутри executeAsModal
