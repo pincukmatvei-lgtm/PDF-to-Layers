@@ -48,3 +48,23 @@ describe("getPdfInfo", () => {
     );
   });
 });
+
+describe("test-files/mixed-pages.pdf", () => {
+  const fs = require("fs");
+  const path = require("path");
+  const { PAGES, expectedSize } = require("../scripts/make-test-pdf");
+
+  test("matches the sizes printed on its pages", async () => {
+    const bytes = fs.readFileSync(path.join(__dirname, "..", "test-files", "mixed-pages.pdf"));
+    const info = await getPdfInfo(bytes);
+    expect(info.pageCount).toBe(PAGES.length);
+    info.sizes.forEach((size, i) => {
+      const exp = expectedSize(PAGES[i]);
+      expect(size.width).toBeCloseTo(exp.width, 2);
+      expect(size.height).toBeCloseTo(exp.height, 2);
+    });
+    // Rotated page reads as landscape, cropped page as its CropBox.
+    expect(info.sizes[3].width).toBeGreaterThan(info.sizes[3].height);
+    expect(info.sizes[4]).toEqual({ width: 432, height: 504 });
+  });
+});
